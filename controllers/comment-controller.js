@@ -1,6 +1,7 @@
 const { Comment, Pizza } = require('../models');
 
 
+
 const commentController = {
     addComment({ params, body }, res) {
         console.log(body);
@@ -18,6 +19,28 @@ const commentController = {
             }
             res.json(dbPizza)
         }).catch(err => res.json(err))
+    },
+    addReply({ params, body}, res ) {
+        Comment.findOneAndUpdate(
+            { _id: params.commentId },
+            { $push: { replies: body } },
+            { new: true }
+        ).then(dbPizza => {
+            if(!dbPizza) {
+                res.status(404).json({ message: 'no pizza found with this id' });
+                return;
+            }
+            res.json(dbPizza)
+        }).catch(err => res.json(err))
+    },
+
+    removeReply({ params }, res ){
+        Comment.findOneAndUpdate(
+            { _id: params.commentId }, 
+            { $pull: { replies: { replyId: params.replyId } } },
+            { new: true }
+        ).then(dbPizza => res.json(dbPizza))
+        .catch(err => res.json(err));
     },
 
     removeComment({ params }, res) {

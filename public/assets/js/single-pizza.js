@@ -1,3 +1,4 @@
+
 const $backBtn = document.querySelector('#back-btn');
 const $pizzaName = document.querySelector('#pizza-name');
 const $createdBy = document.querySelector('#created-by');
@@ -8,6 +9,25 @@ const $commentSection = document.querySelector('#comment-section');
 const $newCommentForm = document.querySelector('#new-comment-form');
 
 let pizzaId;
+
+function getPizza() {
+  const searchParams = new URLSearchParams(document.location.search.substring(1));
+  const pizzaId = searchParams.get('id');
+
+  fetch(`/api/pizzas/${pizzaId}`)
+  .then(res => {
+    if(!res.ok) {
+      throw new Error({ message: 'Something went wrong!!' });
+    }
+    return res.json();
+  })
+  .then(printPizza)
+  .catch(err => {
+    console.log(err);
+    alert('cannot find a pizza with this id! taking you back!');
+    window.history.back();
+  })
+}
 
 function printPizza(pizzaData) {
   console.log(pizzaData);
@@ -87,6 +107,22 @@ function handleNewCommentSubmit(event) {
   }
 
   const formData = { commentBody, writtenBy };
+
+  fetch(`/api/comments/${pizzaId}`, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json', 
+      'Content-Type': 'application/json'
+    }, 
+    body: JSON.stringify(formData)
+  })
+  .then(commentResponse => {
+    console.log(commentResponse);
+    location.reload();
+  })
+  .catch(err => {
+    console.log(err);
+  })
 }
 
 function handleNewReplySubmit(event) {
@@ -106,6 +142,27 @@ function handleNewReplySubmit(event) {
   }
 
   const formData = { writtenBy, replyBody };
+
+  fetch(`/api/comments/${pizzaId}/${commentId}`, {
+    method: 'PUT',
+    headers: {
+      Accept: 'application/json', 
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(formData)
+  }).then(res => {
+    if(!res.ok) {
+      throw new Error('something went wrong!')
+    }
+    res.json();
+
+  })
+  .then(commentRes => {
+    console.log(commentRes);
+    location.reload();
+  }).catch(err => {
+    console.log(err)
+  })
 }
 
 $backBtn.addEventListener('click', function() {
@@ -114,3 +171,5 @@ $backBtn.addEventListener('click', function() {
 
 $newCommentForm.addEventListener('submit', handleNewCommentSubmit);
 $commentSection.addEventListener('submit', handleNewReplySubmit);
+
+getPizza();
